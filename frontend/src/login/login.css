@@ -1,0 +1,141 @@
+.container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.top-logo {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.login-box {
+  position: relative;
+  background: #1e293b;
+  padding: 40px;
+  border-radius: 16px;
+  width: 340px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  transition: transform 0.2s ease;
+  z-index: 1;
+}
+
+/* ANIMOWANY BORDER */
+.login-box::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  padding: 2px;
+  background: linear-gradient(
+    270deg,
+    #22c55e,
+    #3b82f6,
+    #a855f7,
+    #ef4444,
+    #22c55e
+  );
+  background-size: 400% 400%;
+  animation: borderMove 6s linear infinite;
+
+  /* maskowanie żeby działało jak border */
+  z-index: -1;
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* animacja */
+@keyframes borderMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 400% 50%;
+  }
+}
+
+.login-box:hover {
+  transform: translateY(-3px);
+}
+
+.logo {
+  margin-bottom: 10px;
+  font-size: 26px;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+.login-input {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+input {
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: white;
+  outline: none;
+  transition: border 0.2s;
+}
+
+input:focus {
+  border: 1px solid #22c55e;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+button:hover {
+  background: #16a34a;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.error {
+  color: #ef4444;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.register-link {
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.register-link a {
+  color: #38bdf8;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
