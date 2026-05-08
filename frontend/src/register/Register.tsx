@@ -13,9 +13,8 @@ export default function Register() {
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
     const navigate = useNavigate();
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         setError("");
-
         if (!firstName || !lastName || !email || !password || !repeatPassword) {
             setError("Wypełnij wszystkie pola!");
             return;
@@ -31,26 +30,23 @@ export default function Register() {
             return;
         }
 
-        const existingUser = JSON.parse(localStorage.getItem("user") || "null");
+        try {
+            const response = await fetch("http://localhost:8080/api/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
 
-        if (existingUser && existingUser.email === email) {
-            setError("Użytkownik już istnieje!");
-            return;
+            const message = await response.text();
+
+            if (response.ok) {
+                navigate("/");
+            } else {
+                setError(message);
+            }
+        } catch (err) {
+            setError("Błąd połączenia z serwerem");
         }
-
-        // ZAPIS DO LOCALSTORAGE
-        const user = {
-            firstName,
-            lastName,
-            email,
-            password
-        };
-
-        localStorage.setItem("user", JSON.stringify(user));
-
-        console.log("Zapisano użytkownika:", user);
-
-        navigate("/");
     };
 
     
