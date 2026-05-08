@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: password_app_postgres
+    environment:
+      POSTGRES_DB: password_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - password_app_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    container_name: password_app_backend
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/password_app
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: password_app_frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+volumes:
+  password_app_data:
