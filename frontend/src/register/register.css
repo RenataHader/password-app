@@ -1,0 +1,98 @@
+.container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.top-logo {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.register-box {
+  position: relative;
+  background: #1e293b;
+  padding: 40px;
+  border-radius: 16px;
+  width: 340px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.register-box::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 18px;
+  padding: 2px;
+  background: linear-gradient(
+    270deg,
+    #22c55e,
+    #3b82f6,
+    #a855f7,
+    #ef4444,
+    #22c55e
+  );
+  background-size: 400% 400%;
+  animation: borderMove 6s linear infinite;
+
+  /* maskowanie żeby działało jak border */
+  z-index: -1;
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+@keyframes borderMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 400% 50%;
+  }
+}
+
+.register-box:hover {
+  transform: translateY(-3px);
+}
+
+.register-input {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.register-input input {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: white;
+}
+
+.register-input button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
+
+.register-input button:hover {
+  background: #16a34a;
+}
+
+.error {
+  color: #ef4444;
+  margin-top: 10px;
+}
