@@ -1,6 +1,7 @@
 package com.example.password.account;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Map;
 
 @RestController
@@ -9,9 +10,11 @@ import java.util.Map;
 public class AccountController {
 
     private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AccountController(AccountRepository accountRepository) {
+    public AccountController(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
         this.accountRepository = accountRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/register")
@@ -23,8 +26,11 @@ public class AccountController {
             return "Użytkownik już istnieje!";
         }
 
-        Account account = new Account(email, password);
+        String passwordHash = passwordEncoder.encode(password);
+
+        Account account = new Account(email, passwordHash);
         accountRepository.save(account);
+
         return "Zarejestrowano pomyślnie!";
     }
 }
