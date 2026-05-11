@@ -27,6 +27,10 @@ public class PasswordEntry {
     @Column(nullable = false)
     private String username;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PasswordCategory category = PasswordCategory.INNE;
+
     @Column(nullable = false, name = "encrypted_password", columnDefinition = "bytea")
     private byte[] encryptedPassword;
 
