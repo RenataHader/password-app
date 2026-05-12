@@ -15,65 +15,62 @@ type PasswordCardProps = {
     toggleVisibility: (id: number) => void;
     copyPassword: (password: string) => void;
     deletePassword: (id: number) => void;
+    toggleFavorite: (id: number) => void;
 };
 
 export default function PasswordCard({
     item,
     toggleVisibility,
     copyPassword,
-    deletePassword
+    deletePassword,
+    toggleFavorite
 }: PasswordCardProps) {
 
     return (
-
         <div className="password-card">
 
+            {/* HEADER */}
             <div className="card-header">
 
                 <h3>{item.site}</h3>
 
-                {item.favorite && <span>⭐</span>}
+                <button
+                    className="star-btn"
+                    onClick={() => toggleFavorite(item.id)}
+                >
+                    {item.favorite ? "⭐" : "☆"}
+                </button>
 
             </div>
 
-            <p>{item.login}</p>
+            {/* INFO */}
+            <p className="login">{item.login}</p>
 
-            <p>
-                {item.hidden
-                    ? "********"
-                    : item.password}
+            <p className="password">
+                {item.hidden ? "********" : item.password}
             </p>
 
             <span className="category-tag">
                 {item.category}
             </span>
 
+            {/* ACTIONS */}
             <div className="actions">
 
-                <button
-                    onClick={() =>
-                        toggleVisibility(item.id)
-                    }
-                >
-                    Pokaż
+                <button onClick={() => toggleVisibility(item.id)}>
+                    {item.hidden ? "Pokaż" : "Ukryj"}
                 </button>
 
-                <button
-                    onClick={() =>
-                        copyPassword(item.password)
-                    }
-                >
+                <button onClick={() => copyPassword(item.password)}>
                     Kopiuj
                 </button>
 
                 <button
-                    onClick={() =>
-                        deletePassword(item.id)
-                    }
+                    className="delete-btn"
+                    onClick={() => deletePassword(item.id)}
                 >
                     Usuń
                 </button>
-
             </div>
 
         </div>

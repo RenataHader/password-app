@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 import Sidebar from "../components/sidebar/Sidebar";
 import SearchBar from "../components/search_bar/SearchBar";
 import PasswordCard from "../components/password_card/PasswordCard";
@@ -18,8 +20,11 @@ type PasswordItem = {
 
 export default function Dashboard() {
 
+    const navigate = useNavigate();
+
     const [items, setItems] = useState<PasswordItem[]>([]);
     const [search, setSearch] = useState("");
+    const [copied, setCopied] = useState(false);
 
     const [site, setSite] = useState("");
     const [login, setLogin] = useState("");
@@ -28,15 +33,20 @@ export default function Dashboard() {
 
     const [selectedCategory, setSelectedCategory] = useState("Wszystkie");
 
+    const [view, setView] = useState<"list" | "add">("list");
+
+    /* ================= LOAD ================= */
     useEffect(() => {
         const data = localStorage.getItem("passwords");
         if (data) setItems(JSON.parse(data));
     }, []);
 
+    /* ================= SAVE ================= */
     useEffect(() => {
         localStorage.setItem("passwords", JSON.stringify(items));
     }, [items]);
 
+    /* ================= ADD ================= */
     const addPassword = () => {
 
         if (!site || !login || !password) return;
@@ -51,93 +61,131 @@ export default function Dashboard() {
             hidden: true
         };
 
-        setItems([...items, newItem]);
+        setItems(prev => [...prev, newItem]);
 
         setSite("");
         setLogin("");
         setPassword("");
+
+        setView("list");
     };
 
+    /* ================= ACTIONS ================= */
     const toggleVisibility = (id: number) => {
-        setItems(items.map(i =>
-            i.id === id ? { ...i, hidden: !i.hidden } : i
+        setItems(items.map(item =>
+            item.id === id ? { ...item, hidden: !item.hidden } : item
         ));
     };
 
     const deletePassword = (id: number) => {
-        setItems(items.filter(i => i.id !== id));
+        setItems(items.filter(item => item.id !== id));
     };
 
-    const copyPassword = (pass: string) => {
-        navigator.clipboard.writeText(pass);
+    const toggleFavorite = (id: number) => {
+        setItems(items.map(item =>
+            item.id === id ? { ...item, favorite: !item.favorite } : item
+        ));
     };
 
+    const copyPassword = async (pass: string) => {
+        await navigator.clipboard.writeText(pass);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+    };
+
+    /* ================= FILTER ================= */
     const filtered = items.filter(item => {
 
-        const matchSearch =
-            item.site.toLowerCase().includes(search.toLowerCase());
+        const matchSearch = item.site
+            .toLowerCase()
+            .includes(search.toLowerCase());
 
         const matchCategory =
             selectedCategory === "Wszystkie" ||
-            item.category === selectedCategory;
+            (selectedCategory === "Ulubione"
+                ? item.favorite
+                : item.category === selectedCategory);
 
         return matchSearch && matchCategory;
     });
 
+    /* ================= LOGOUT (FIX) ================= */
+    const handleLogout = () => {
+        localStorage.removeItem("user");
+        navigate("/"); // 👈 PRZEKIEROWANIE DO LOGIN
+    };
+
+    /* ================= UI ================= */
     return (
         <div className="dashboard-container">
 
             <Sidebar
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
+                setView={setView}
+                onLogout={handleLogout}
             />
 
             <main className="main">
 
-                <SearchBar
-                    search={search}
-                    setSearch={setSearch}
-                />
-
-                <div className="grid">
-
-                    <AddPassword
-                        site={site}
-                        setSite={setSite}
-                        login={login}
-                        setLogin={setLogin}
-                        password={password}
-                        setPassword={setPassword}
-                        category={category}
-                        setCategory={setCategory}
-                        addPassword={addPassword}
+                {view === "list" && (
+                    <SearchBar
+                        search={search}
+                        setSearch={setSearch}
                     />
+                )}
 
-                    <Generator
-                        password={password}
-                        setPassword={setPassword}
-                    />
+                {copied && (
+                    <div className="copy-toast">
+                        📋 Skopiowano hasło!
+                    </div>
+                )}
 
-                </div>
+                {view === "list" && (
+                    <div className="list">
 
-                <div className="list">
+                        {filtered.length === 0 ? (
+                            <p className="empty">Brak zapisanych haseł</p>
+                        ) : (
+                            filtered.map(item => (
+                                <PasswordCard
+                                    key={item.id}
+                                    item={item}
+                                    toggleVisibility={toggleVisibility}
+                                    copyPassword={copyPassword}
+                                    deletePassword={deletePassword}
+                                    toggleFavorite={toggleFavorite}
+                                />
+                            ))
+                        )}
 
-                    {filtered.map(item => (
+                    </div>
+                )}
 
-                        <PasswordCard
-                            key={item.id}
-                            item={item}
-                            toggleVisibility={toggleVisibility}
-                            copyPassword={copyPassword}
-                            deletePassword={deletePassword}
+                {view === "add" && (
+                    <div className="add-view">
+
+                        <AddPassword
+                            site={site}
+                            setSite={setSite}
+                            login={login}
+                            setLogin={setLogin}
+                            password={password}
+                            setPassword={setPassword}
+                            category={category}
+                            setCategory={setCategory}
+                            addPassword={addPassword}
                         />
 
-                    ))}
+                        <Generator
+                            password={password}
+                            setPassword={setPassword}
+                        />
 
-                </div>
+                    </div>
+                )}
 
             </main>
-
         </div>
     );
 }

@@ -56,3 +56,19 @@
 .logout-btn:hover {
   background: #dc2626;
 }
+.generator-btn {
+  margin-top: 10px;
+  background: #3b82f6 !important;
+}
+
+.generator-btn:hover {
+  background: #2563eb !important;
+}
+
+hr {
+  border: none;
+  height: 1px;
+  width: 100%;
+  background: #334155;
+  margin: 15px 0;
+}

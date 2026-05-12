@@ -3,11 +3,15 @@ import "./sidebar.css";
 type SidebarProps = {
     selectedCategory: string;
     setSelectedCategory: (category: string) => void;
+    setView: (view: "list" | "add") => void;
+    onLogout: () => void;
 };
 
 export default function Sidebar({
     selectedCategory,
-    setSelectedCategory
+    setSelectedCategory,
+    setView,
+    onLogout
 }: SidebarProps) {
 
     const categories = [
@@ -40,18 +44,29 @@ export default function Sidebar({
                                 ? "active"
                                 : ""
                         }
-                        onClick={() =>
-                            setSelectedCategory(category)
-                        }
+                        onClick={() => {
+                            setSelectedCategory(category);
+                            setView("list");
+                        }}
                     >
                         {category}
                     </button>
 
                 ))}
 
-            </nav>
+                <hr />
 
-            <button className="logout-btn">
+                <button
+                    className="add-btn"
+                    onClick={() => setView("add")}
+                >
+                    ➕ Dodaj nowe hasło
+                </button>
+            </nav>
+            <button
+                className="logout-btn"
+                onClick={onLogout}
+            >
                 Wyloguj
             </button>
 
