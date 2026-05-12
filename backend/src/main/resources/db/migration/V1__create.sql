@@ -9,6 +9,7 @@ CREATE TABLE password_entry (
     account_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
+    category VARCHAR(50) NOT NULL DEFAULT 'INNE',
     encrypted_password BYTEA NOT NULL,
     iv BYTEA NOT NULL,
 
