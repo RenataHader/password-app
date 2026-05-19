@@ -39,26 +39,39 @@ export default function Dashboard() {
     const [selectedCategory, setSelectedCategory] = useState("Wszystkie");
     const [view, setView] = useState<View>("list");
 
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const fetchPasswords = async () => {
+        try {
+            const res = await fetch("/api/passwords", {
+                credentials: "include"
+            });
+
+            if (!res.ok) {
+                console.error("Nie udało się pobrać haseł");
+                return;
+            }
+
+            const data = await res.json();
+
+            const mapped = data.map((entry: any) => ({
+                id: entry.id,
+                site: entry.name,
+                link: entry.link,
+                login: entry.login,
+                password: entry.password,
+                category: entry.category,
+                hidden: true
+            }));
+
+            setItems(mapped);
+        } catch (err) {
+            console.error("Błąd pobierania haseł", err);
+        }
+    };
 
     useEffect(() => {
-        if (!user.userId) return;
-
-        fetch(`http://localhost:8080/api/passwords/${user.userId}`)
-            .then(res => res.json())
-            .then(data => {
-                const mapped = data.map((entry: any) => ({
-                    id: entry.id,
-                    site: entry.name,
-                    link: entry.link,
-                    login: entry.login,
-                    password: entry.password,
-                    category: entry.category,
-                    hidden: true
-                }));
-                setItems(mapped);
-            });
+        fetchPasswords();
     }, []);
+
     const normalizeLink = (value: string) => {
         if (!value.trim()) return null;
         return /^https?:\/\//i.test(value) ? value : `https://${value}`;
@@ -67,9 +80,10 @@ export default function Dashboard() {
     const addPassword = async () => {
         if (!site || !login || !password) return;
 
-        await fetch(`http://localhost:8080/api/passwords/${user.userId}`, {
+        const response = await fetch("/api/passwords", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({
                 site,
                 link: normalizeLink(link),
@@ -79,11 +93,19 @@ export default function Dashboard() {
             })
         });
 
+        if (!response.ok) {
+            console.error("Nie udało się dodać hasła");
+            return;
+        }
+
         setSite("");
         setLink("");
         setLogin("");
         setPassword("");
         setGeneratedPassword("");
+
+        await fetchPasswords();
+
         setView("list");
     };
 
@@ -95,13 +117,19 @@ export default function Dashboard() {
         );
     };
 
-    const deletePassword = async (id: number) => {
-        await fetch(`http://localhost:8080/api/passwords/${id}`, {
-            method: "DELETE"
-        });
+   const deletePassword = async (id: number) => {
+       const response = await fetch(`/api/passwords/${id}`, {
+           method: "DELETE",
+           credentials: "include"
+       });
 
-        setItems(prev => prev.filter(i => i.id !== id));
-    };
+       if (!response.ok) {
+           console.error("Nie udało się usunąć hasła");
+           return;
+       }
+
+       setItems(prev => prev.filter(i => i.id !== id));
+   };
 
     const copyPassword = async (pass: string) => {
         await navigator.clipboard.writeText(pass);
@@ -119,10 +147,14 @@ export default function Dashboard() {
         return matchSearch && matchCategory;
     });
 
-    const handleLogout = () => {
-        localStorage.clear();
-        navigate("/");
-    };
+const handleLogout = async () => {
+    await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include"
+    });
+
+    navigate("/");
+};
 
     return (
         <div className="dashboard-container">

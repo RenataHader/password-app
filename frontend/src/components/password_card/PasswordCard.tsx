@@ -34,8 +34,8 @@ export default function PasswordCard({
                 <h3>{item.site}</h3>
 
             </div>
-            {item.link && (
-                <p>
+            <p>
+                {item.link ? (
                     <a
                         href={item.link}
                         target="_blank"
@@ -44,8 +44,12 @@ export default function PasswordCard({
                     >
                         {item.link}
                     </a>
-                </p>
-            )}
+                ) : (
+                    <span className="no-link">
+                        Brak linku
+                    </span>
+                )}
+            </p>
 
             {/* INFO */}
             <p className="login">{item.login}</p>

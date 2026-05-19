@@ -1,7 +1,10 @@
 CREATE TABLE account (
     id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    surname VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL
+    password_hash VARCHAR(255) NOT NULL,
+    password_changed_at DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 CREATE TABLE password_entry (

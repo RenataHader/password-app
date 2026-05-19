@@ -103,3 +103,12 @@
 .profile-actions button:nth-child(2):hover {
   background: #2563eb;
 }
+
+.password-warning {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.password-change-box {
+    margin-top: 24px;
+}
