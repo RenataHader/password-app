@@ -3,7 +3,7 @@ import "./sidebar.css";
 type SidebarProps = {
     selectedCategory: string;
     setSelectedCategory: (category: string) => void;
-    setView: (view: "list" | "add") => void;
+    setView: (view: "list" | "add" | "account") => void;
     onLogout: () => void;
 };
 
@@ -34,7 +34,6 @@ export default function Sidebar({
             <nav className="sidebar-menu">
 
                 {categories.map(category => (
-
                     <button
                         key={category.value}
                         className={
@@ -49,7 +48,6 @@ export default function Sidebar({
                     >
                         {category.label}
                     </button>
-
                 ))}
 
                 <hr />
@@ -60,7 +58,13 @@ export default function Sidebar({
                 >
                     ➕ Dodaj nowe hasło
                 </button>
+
+                <button onClick={() => setView("account")}>
+                    👤 Moje konto
+                </button>
+
             </nav>
+
             <button
                 className="logout-btn"
                 onClick={onLogout}

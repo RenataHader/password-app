@@ -49,8 +49,6 @@ export default function Register() {
         }
     };
 
-    
-
     return (
         <div className="container">
             <img src="/images/full_logo.png" alt="PassManager logo" className="top-logo" />

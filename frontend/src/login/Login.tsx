@@ -24,16 +24,19 @@ export default function Login() {
                 body: JSON.stringify({ email, password })
             });
 
+            console.log("STATUS:", response.status);
+
             if (response.ok) {
-                const data = await response.json();
-                localStorage.setItem("user", JSON.stringify(data));
-                localStorage.setItem("loggedIn", "true");
+                console.log("LOGIN OK - NAVIGATE");
                 navigate("/dashboard");
             } else {
-                const message = await response.text();
-                setError(message);
+                const errorText = await response.text();
+                console.log("LOGIN ERROR:", errorText);
+                setError(errorText);
             }
+
         } catch (err) {
+            console.log("NETWORK ERROR:", err);
             setError("Błąd połączenia z serwerem");
         }
     };
