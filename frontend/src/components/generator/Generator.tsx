@@ -3,22 +3,26 @@ import "./generator.css";
 type Props = {
     password: string;
     setPassword: (v: string) => void;
+    copyPassword: (pass: string) => void;
 };
 
 export default function Generator({
     password,
-    setPassword
+    setPassword,
+    copyPassword
 }: Props) {
 
     const generate = () => {
-
         const chars =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
 
         let pass = "";
+        const randomValues = new Uint32Array(12);
+
+        window.crypto.getRandomValues(randomValues);
 
         for (let i = 0; i < 12; i++) {
-            pass += chars[Math.floor(Math.random() * chars.length)];
+            pass += chars[randomValues[i] % chars.length];
         }
 
         setPassword(pass);
@@ -34,9 +38,19 @@ export default function Generator({
             </button>
 
             {password && (
-                <p className="preview">
-                    {password}
-                </p>
+                <div className="generated-row">
+                    <p className="preview">
+                        {password}
+                    </p>
+
+                    <button
+                        type="button"
+                        className="copy-generated-btn"
+                        onClick={() => copyPassword(password)}
+                    >
+                        Kopiuj
+                    </button>
+                </div>
             )}
 
         </div>

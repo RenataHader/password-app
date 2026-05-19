@@ -24,8 +24,11 @@ public class PasswordEntry {
     @Column(nullable = false)
     private String name;
 
+    @Column
+    private String link;
+
     @Column(nullable = false)
-    private String username;
+    private String login;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -37,10 +40,10 @@ public class PasswordEntry {
     @Column(nullable = false, name = "iv", columnDefinition = "bytea")
     private byte[] iv;
 
-    public PasswordEntry(Account account, String name, String username, byte[] encryptedPassword, byte[] iv) {
+    public PasswordEntry(Account account, String name, String login, byte[] encryptedPassword, byte[] iv) {
         this.account = account;
         this.name = name;
-        this.username = username;
+        this.login = login;
         this.encryptedPassword = encryptedPassword;
         this.iv = iv;
     }

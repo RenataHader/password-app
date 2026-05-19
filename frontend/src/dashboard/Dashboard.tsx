@@ -11,10 +11,10 @@ import "./dashboard.css";
 type PasswordItem = {
     id: number;
     site: string;
+    link?: string;
     login: string;
     password: string;
     category: string;
-    favorite: boolean;
     hidden: boolean;
 };
 
@@ -25,9 +25,11 @@ export default function Dashboard() {
     const [copied, setCopied] = useState(false);
 
     const [site, setSite] = useState("");
+    const [link, setLink] = useState("");
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
-    const [category, setCategory] = useState("Social Media");
+    const [generatedPassword, setGeneratedPassword] = useState("");
+    const [category, setCategory] = useState("SOCIAL_MEDIA");
     const [selectedCategory, setSelectedCategory] = useState("Wszystkie");
     const [view, setView] = useState<"list" | "add">("list");
 
@@ -43,10 +45,10 @@ export default function Dashboard() {
             const mapped = data.map((entry: any) => ({
                 id: entry.id,
                 site: entry.name,
-                login: entry.username,
+                link: entry.link,
+                login: entry.login,
                 password: entry.password,
                 category: entry.category,
-                favorite: false,
                 hidden: true
             }));
             setItems(mapped);
@@ -59,18 +61,34 @@ export default function Dashboard() {
         fetchPasswords();
     }, []);
 
+    const normalizeLink = (value: string) => {
+        const trimmed = value.trim();
+
+        if (!trimmed) return null;
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+        return `https://${trimmed}`;
+    };
+
     const addPassword = async () => {
-        if (!site || !login || !password || !user.userId) return;
+        if (!site.trim() || !login.trim() || !password || !user.userId) return;
 
         try {
             const response = await fetch(`http://localhost:8080/api/passwords/${user.userId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ site, login, password, category })
+                body: JSON.stringify({
+                                site: site.trim(),
+                                link: normalizeLink(link),
+                                login: login.trim(),
+                                password,
+                                category
+                            })
             });
 
             if (response.ok) {
                 setSite("");
+                setLink("");
                 setLogin("");
                 setPassword("");
                 setView("list");
@@ -98,12 +116,6 @@ export default function Dashboard() {
         ));
     };
 
-    const toggleFavorite = (id: number) => {
-        setItems(items.map(item =>
-            item.id === id ? { ...item, favorite: !item.favorite } : item
-        ));
-    };
-
     const copyPassword = async (pass: string) => {
         await navigator.clipboard.writeText(pass);
         setCopied(true);
@@ -112,10 +124,11 @@ export default function Dashboard() {
 
     const filtered = items.filter(item => {
         const matchSearch = item.site.toLowerCase().includes(search.toLowerCase());
-        const matchCategory = selectedCategory === "Wszystkie" ||
-            (selectedCategory === "Ulubione"
-                ? item.favorite
-                : item.category.replace("_", " ").toLowerCase() === selectedCategory.toLowerCase());
+
+        const matchCategory =
+            selectedCategory === "Wszystkie" ||
+            item.category === selectedCategory;
+
         return matchSearch && matchCategory;
     });
 
@@ -147,7 +160,7 @@ export default function Dashboard() {
                                     toggleVisibility={toggleVisibility}
                                     copyPassword={copyPassword}
                                     deletePassword={deletePassword}
-                                    toggleFavorite={toggleFavorite}
+
                                 />
                             ))
                         )}
@@ -157,12 +170,17 @@ export default function Dashboard() {
                     <div className="add-view">
                         <AddPassword
                             site={site} setSite={setSite}
+                            link={link} setLink={setLink}
                             login={login} setLogin={setLogin}
                             password={password} setPassword={setPassword}
                             category={category} setCategory={setCategory}
                             addPassword={addPassword}
                         />
-                        <Generator password={password} setPassword={setPassword} />
+                        <Generator
+                            password={generatedPassword}
+                            setPassword={setGeneratedPassword}
+                            copyPassword={copyPassword}
+                        />
                     </div>
                 )}
             </main>

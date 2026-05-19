@@ -15,13 +15,11 @@ export default function Sidebar({
 }: SidebarProps) {
 
     const categories = [
-        "Wszystkie",
-        "Ulubione",
-        "Social Media",
-        "Bankowość",
-        "Praca",
-        "Programowanie",
-        "Inne"
+        { label: "Wszystkie", value: "Wszystkie" },
+        { label: "Social Media", value: "SOCIAL_MEDIA" },
+        { label: "Bankowość", value: "BANKOWOSC" },
+        { label: "Praca", value: "PRACA" },
+        { label: "Inne", value: "INNE" }
     ];
 
     return (
@@ -38,18 +36,18 @@ export default function Sidebar({
                 {categories.map(category => (
 
                     <button
-                        key={category}
+                        key={category.value}
                         className={
-                            selectedCategory === category
+                            selectedCategory === category.value
                                 ? "active"
                                 : ""
                         }
                         onClick={() => {
-                            setSelectedCategory(category);
+                            setSelectedCategory(category.value);
                             setView("list");
                         }}
                     >
-                        {category}
+                        {category.label}
                     </button>
 
                 ))}

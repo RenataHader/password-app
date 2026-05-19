@@ -3,10 +3,10 @@ import "./passwordCard.css";
 type PasswordItem = {
     id: number;
     site: string;
+    link?: string;
     login: string;
     password: string;
     category: string;
-    favorite: boolean;
     hidden: boolean;
 };
 
@@ -15,7 +15,6 @@ type PasswordCardProps = {
     toggleVisibility: (id: number) => void;
     copyPassword: (password: string) => void;
     deletePassword: (id: number) => void;
-    toggleFavorite: (id: number) => void;
 };
 
 export default function PasswordCard({
@@ -23,7 +22,7 @@ export default function PasswordCard({
     toggleVisibility,
     copyPassword,
     deletePassword,
-    toggleFavorite
+
 }: PasswordCardProps) {
 
     return (
@@ -34,14 +33,19 @@ export default function PasswordCard({
 
                 <h3>{item.site}</h3>
 
-                <button
-                    className="star-btn"
-                    onClick={() => toggleFavorite(item.id)}
-                >
-                    {item.favorite ? "⭐" : "☆"}
-                </button>
-
             </div>
+            {item.link && (
+                <p>
+                    <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="site-link"
+                    >
+                        {item.link}
+                    </a>
+                </p>
+            )}
 
             {/* INFO */}
             <p className="login">{item.login}</p>
@@ -49,10 +53,6 @@ export default function PasswordCard({
             <p className="password">
                 {item.hidden ? "********" : item.password}
             </p>
-
-            <span className="category-tag">
-                {item.category}
-            </span>
 
             {/* ACTIONS */}
             <div className="actions">

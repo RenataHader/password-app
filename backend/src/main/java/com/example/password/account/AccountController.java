@@ -21,12 +21,16 @@ public class AccountController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestBody Map<String, String> data) {
+    public ResponseEntity<String> register(@RequestBody Map<String, String> data) {
         String email = data.get("email");
         String password = data.get("password");
 
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body("Email i hasło są wymagane!");
+        }
+
         if (accountRepository.existsByEmail(email)) {
-            return "Użytkownik już istnieje!";
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Użytkownik już istnieje!");
         }
 
         String passwordHash = passwordEncoder.encode(password);
@@ -34,7 +38,7 @@ public class AccountController {
         Account account = new Account(email, passwordHash);
         accountRepository.save(account);
 
-        return "Zarejestrowano pomyślnie!";
+        return ResponseEntity.status(HttpStatus.CREATED).body("Zarejestrowano pomyślnie!");
     }
 
     @PostMapping("/login")

@@ -35,7 +35,8 @@ public class PasswordEntryController {
             Map<String, Object> map = new HashMap<>();
             map.put("id", entry.getId());
             map.put("name", entry.getName());
-            map.put("username", entry.getUsername());
+            map.put("link", entry.getLink());
+            map.put("login", entry.getLogin());
             map.put("category", entry.getCategory());
 
             try {
@@ -59,9 +60,11 @@ public class PasswordEntryController {
             PasswordEntry entry = new PasswordEntry();
             entry.setAccount(account);
             entry.setName(data.get("site"));
-            entry.setUsername(data.get("login"));
+            String link = data.get("link");
+            entry.setLink(link == null || link.isBlank() ? null : link);
+            entry.setLogin(data.get("login"));
 
-            String categoryStr = data.get("category").toUpperCase().replace(" ", "_");
+            String categoryStr = data.getOrDefault("category", "INNE");
             try {
                 entry.setCategory(PasswordCategory.valueOf(categoryStr));
             } catch (IllegalArgumentException e) {

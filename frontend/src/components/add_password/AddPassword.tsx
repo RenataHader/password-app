@@ -1,9 +1,10 @@
-import { useState } from "react";
 import "./addPassword.css";
 
 type Props = {
     site: string;
     setSite: (v: string) => void;
+    link: string;
+    setLink: (v: string) => void;
     login: string;
     setLogin: (v: string) => void;
     password: string;
@@ -16,6 +17,8 @@ type Props = {
 export default function AddPassword({
     site,
     setSite,
+    link,
+    setLink,
     login,
     setLogin,
     password,
@@ -37,12 +40,20 @@ export default function AddPassword({
             />
 
             <input
+                type="url"
+                placeholder="Link (opcjonalnie)"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+            />
+
+            <input
                 placeholder="Login"
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
             />
 
             <input
+                type="password"
                 placeholder="Hasło"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -52,11 +63,10 @@ export default function AddPassword({
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
             >
-                <option>Social Media</option>
-                <option>Bankowość</option>
-                <option>Praca</option>
-                <option>Programowanie</option>
-                <option>Inne</option>
+                <option value="SOCIAL_MEDIA">Social Media</option>
+                <option value="BANKOWOSC">Bankowość</option>
+                <option value="PRACA">Praca</option>
+                <option value="INNE">Inne</option>
             </select>
 
             <button onClick={addPassword}>
