@@ -1,14 +1,17 @@
 import "./sidebar.css";
+type View = "list" | "add" | "account";
 
 type SidebarProps = {
     selectedCategory: string;
+    activeView: View;
     setSelectedCategory: (category: string) => void;
-    setView: (view: "list" | "add" | "account") => void;
+    setView: (view: View) => void;
     onLogout: () => void;
 };
 
 export default function Sidebar({
     selectedCategory,
+    activeView,
     setSelectedCategory,
     setView,
     onLogout
@@ -37,7 +40,7 @@ export default function Sidebar({
                     <button
                         key={category.value}
                         className={
-                            selectedCategory === category.value
+                            activeView === "list" && selectedCategory === category.value
                                 ? "active"
                                 : ""
                         }
@@ -53,13 +56,16 @@ export default function Sidebar({
                 <hr />
 
                 <button
-                    className="add-btn"
+                    className={activeView === "add" ? "add-btn active" : "add-btn"}
                     onClick={() => setView("add")}
                 >
                     ➕ Dodaj nowe hasło
                 </button>
 
-                <button onClick={() => setView("account")}>
+                <button
+                    className={activeView === "account" ? "active" : ""}
+                    onClick={() => setView("account")}
+                >
                     👤 Moje konto
                 </button>
 

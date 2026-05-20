@@ -15,7 +15,8 @@ type User = {
 export default function Account() {
     const [editProfile, setEditProfile] = useState(false);
     const [showPasswordChange, setShowPasswordChange] = useState(false);
-    const [error, setError] = useState("");
+    const [profileError, setProfileError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
 
     const [user, setUser] = useState<User | null>(null);
 
@@ -41,7 +42,7 @@ export default function Account() {
             });
 
             if (!res.ok) {
-                setError("Nie jesteś zalogowana albo sesja wygasła.");
+                setProfileError("Nie jesteś zalogowana albo sesja wygasła.");
                 return;
             }
 
@@ -55,10 +56,10 @@ export default function Account() {
                 email: data.email
             });
 
-            setError("");
+            setProfileError("");
         } catch (err) {
             console.error("Nie udało się pobrać danych profilu", err);
-            setError("Nie udało się pobrać danych profilu.");
+            setProfileError("Nie udało się pobrać danych profilu.");
         }
     };
 
@@ -93,7 +94,7 @@ export default function Account() {
 
             if (!res.ok) {
                 const message = await res.text();
-                setError(message);
+                setProfileError(message);
                 return;
             }
 
@@ -101,11 +102,11 @@ export default function Account() {
 
             setUser(saved);
             setEditProfile(false);
-            setError("");
+            setProfileError("");
 
         } catch (err) {
             console.error("Nie udało się zapisać profilu", err);
-            setError("Nie udało się zapisać profilu.");
+            setProfileError("Nie udało się zapisać profilu.");
         }
     };
 
@@ -119,7 +120,7 @@ export default function Account() {
         });
 
         setEditProfile(false);
-        setError("");
+        setProfileError("");
     };
 
     const changePassword = async () => {
@@ -135,7 +136,7 @@ export default function Account() {
 
             if (!res.ok) {
                 const message = await res.text();
-                setError(message);
+                setPasswordError(message);
                 return;
             }
 
@@ -149,11 +150,11 @@ export default function Account() {
             });
 
             setShowPasswordChange(false);
-            setError("");
+            setPasswordError("");
 
         } catch (err) {
             console.error("Nie udało się zmienić hasła", err);
-            setError("Nie udało się zmienić hasła.");
+            setPasswordError("Nie udało się zmienić hasła.");
         }
     };
 
@@ -162,9 +163,9 @@ export default function Account() {
             <section className="profile-section">
                 <h2>👤 Mój profil</h2>
 
-                {error && (
+                {profileError && (
                     <p className="error">
-                        {error}
+                        {profileError}
                     </p>
                 )}
             </section>
@@ -176,9 +177,9 @@ export default function Account() {
 
             <h2>👤 Mój profil</h2>
 
-            {error && (
+            {profileError && (
                 <p className="error">
-                    {error}
+                    {profileError}
                 </p>
             )}
 
@@ -207,7 +208,10 @@ export default function Account() {
                             Edytuj profil
                         </button>
 
-                        <button onClick={() => setShowPasswordChange(prev => !prev)}>
+                        <button onClick={() => {
+                            setShowPasswordChange(prev => !prev);
+                            setPasswordError("");
+                        }}>
                             Zmień hasło
                         </button>
 
@@ -268,6 +272,12 @@ export default function Account() {
 
                     <h3>Zmiana hasła do menadżera</h3>
 
+                    {passwordError && (
+                        <p className="error password-change-error">
+                            {passwordError}
+                        </p>
+                    )}
+
                     <label>
                         Aktualne hasło
                         <input
@@ -302,7 +312,7 @@ export default function Account() {
                                     currentPassword: "",
                                     newPassword: ""
                                 });
-                                setError("");
+                                setPasswordError("");
                             }}
                         >
                             Anuluj

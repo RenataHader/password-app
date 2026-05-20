@@ -112,3 +112,16 @@
 .password-change-box {
     margin-top: 24px;
 }
+
+.password-change-error {
+  margin: 0 0 4px;
+}
+
+.error {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}

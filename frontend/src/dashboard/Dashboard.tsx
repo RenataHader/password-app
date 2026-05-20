@@ -161,6 +161,7 @@ const handleLogout = async () => {
 
             <Sidebar
                 selectedCategory={selectedCategory}
+                activeView={view}
                 setSelectedCategory={setSelectedCategory}
                 setView={setView}
                 onLogout={handleLogout}
