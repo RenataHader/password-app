@@ -45,6 +45,11 @@ export default function Dashboard() {
                 credentials: "include"
             });
 
+             if (res.status === 401) {
+                  navigate("/");
+                  return;
+             }
+
             if (!res.ok) {
                 console.error("Nie udało się pobrać haseł");
                 return;

@@ -9,6 +9,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.time.LocalDateTime;
+import java.util.Random;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 
 @RestController
 @RequestMapping("/api")
@@ -17,10 +21,12 @@ public class AccountController {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JavaMailSender mailSender;
 
-    public AccountController(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
+    public AccountController(AccountRepository accountRepository, PasswordEncoder passwordEncoder, JavaMailSender mailSender) {
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
+        this.mailSender = mailSender;
     }
 
     @PostMapping("/register")
@@ -63,13 +69,63 @@ public class AccountController {
         if (accountOpt.isPresent() && passwordEncoder.matches(password, accountOpt.get().getPasswordHash())) {
 
             Account account = accountOpt.get();
-            session.setAttribute("userId", account.getId());
 
-            return ResponseEntity.ok("Zalogowano pomyślnie");
+            String code = String.format("%06d", new Random().nextInt(1000000));
+
+            session.setAttribute("pendingUserId", account.getId());
+            session.setAttribute("loginCode", code);
+            session.setAttribute("loginCodeExpiresAt", LocalDateTime.now().plusMinutes(5));
+
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(account.getEmail());
+            message.setSubject("Kod logowania do PassManager");
+            message.setText("Twój kod logowania to: " + code + "\nKod jest ważny przez 5 minut.");
+
+            mailSender.send(message);
+
+            return ResponseEntity.ok("Kod został wysłany na email");
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body("Niepoprawny email lub hasło!");
+    }
+
+    @PostMapping("/verify-login-code")
+    public ResponseEntity<?> verifyLoginCode(@RequestBody Map<String, String> data, HttpSession session) {
+
+        String code = data.get("code");
+
+        Long pendingUserId = (Long) session.getAttribute("pendingUserId");
+        String loginCode = (String) session.getAttribute("loginCode");
+        LocalDateTime loginCodeExpiresAt = (LocalDateTime) session.getAttribute("loginCodeExpiresAt");
+
+        if (pendingUserId == null || loginCode == null || loginCodeExpiresAt == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Brak rozpoczętego logowania");
+        }
+
+        if (LocalDateTime.now().isAfter(loginCodeExpiresAt)) {
+            session.removeAttribute("pendingUserId");
+            session.removeAttribute("loginCode");
+            session.removeAttribute("loginCodeExpiresAt");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Kod wygasł");
+        }
+
+        if (code == null || code.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Kod jest wymagany");
+        }
+
+        if (!code.equals(loginCode)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Niepoprawny kod");
+        }
+
+        session.setAttribute("userId", pendingUserId);
+
+        session.removeAttribute("pendingUserId");
+        session.removeAttribute("loginCode");
+        session.removeAttribute("loginCodeExpiresAt");
+
+        return ResponseEntity.ok("Zalogowano pomyślnie");
     }
 
     @GetMapping("/me")
