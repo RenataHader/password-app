@@ -17,11 +17,11 @@ export default function Generator({
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
 
         let pass = "";
-        const randomValues = new Uint32Array(12);
+        const randomValues = new Uint32Array(16);
 
         window.crypto.getRandomValues(randomValues);
 
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 16; i++) {
             pass += chars[randomValues[i] % chars.length];
         }
 

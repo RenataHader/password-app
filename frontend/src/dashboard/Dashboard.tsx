@@ -83,9 +83,23 @@ export default function Dashboard() {
     };
 
     const addPassword = async () => {
-        if (!site || !login || !password) return;
 
-        const response = await fetch("/api/passwords", {
+    const strongPassword =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+
+    if (!site.trim() || !login.trim() || !password.trim()) {
+        alert("Uzupełnij wszystkie pola");
+        return;
+    }
+
+    if (!strongPassword.test(password)) {
+        alert(
+            "Hasło musi mieć min. 8 znaków, dużą literę, cyfrę i znak specjalny"
+        );
+        return;
+    }
+
+    const response = await fetch("/api/passwords", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -110,7 +124,6 @@ export default function Dashboard() {
         setGeneratedPassword("");
 
         await fetchPasswords();
-
         setView("list");
     };
 

@@ -57,7 +57,15 @@ export default function AddPassword({
                 placeholder="Hasło"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
             />
+
+            {password && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/.test(password) && (
+                <p className="password-error">
+                    Hasło musi mieć min. 8 znaków, dużą literę,
+                    cyfrę i znak specjalny
+                </p>
+            )}
 
             <select
                 value={category}
