@@ -27,19 +27,14 @@ export default function Login() {
                 body: JSON.stringify({ email, password })
             });
 
-            console.log("STATUS:", response.status);
-
             if (response.ok) {
-                console.log("LOGIN OK - CODE SENT");
                 setCodeSent(true);
             } else {
                 const errorText = await response.text();
-                console.log("LOGIN ERROR:", errorText);
                 setError(errorText);
             }
 
-        } catch (err) {
-            console.log("NETWORK ERROR:", err);
+        } catch {
             setError("Błąd połączenia z serwerem");
         }
     };
@@ -60,19 +55,14 @@ export default function Login() {
                 body: JSON.stringify({ code })
             });
 
-            console.log("VERIFY STATUS:", response.status);
-
             if (response.ok) {
-                console.log("VERIFY OK - NAVIGATE");
                 navigate("/dashboard");
             } else {
                 const errorText = await response.text();
-                console.log("VERIFY ERROR:", errorText);
                 setError(errorText);
             }
 
-        } catch (err) {
-            console.log("NETWORK ERROR:", err);
+        } catch {
             setError("Błąd połączenia z serwerem");
         }
     };

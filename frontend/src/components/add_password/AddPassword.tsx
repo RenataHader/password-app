@@ -1,5 +1,6 @@
 import "./addPassword.css";
-
+import { useState } from "react";
+import PasswordStrengthPopup from "../password_strenght/PasswordStrengthPopup";
 type Props = {
     site: string;
     setSite: (v: string) => void;
@@ -12,6 +13,17 @@ type Props = {
     category: string;
     setCategory: (v: string) => void;
     addPassword: () => void;
+    passwordInfo: {
+        label: string;
+        className: string;
+        checks: {
+            minLength: boolean;
+            lowerCase: boolean;
+            upperCase: boolean;
+            number: boolean;
+            specialChar: boolean;
+        };
+    };
 };
 
 export default function AddPassword({
@@ -25,8 +37,11 @@ export default function AddPassword({
     setPassword,
     category,
     setCategory,
-    addPassword
+    addPassword,
+    passwordInfo
 }: Props) {
+
+    const [showPasswordInfo, setShowPasswordInfo] = useState(false);
 
     return (
         <div className="add-box">
@@ -52,20 +67,22 @@ export default function AddPassword({
                 onChange={(e) => setLogin(e.target.value)}
             />
 
-            <input
-                type="password"
-                placeholder="Hasło"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                minLength={8}
-            />
+            <div className="password-input-wrapper">
+                <input
+                    type="password"
+                    placeholder="Hasło"
+                    value={password}
+                    onFocus={() => setShowPasswordInfo(true)}
+                    onBlur={() => setTimeout(() => setShowPasswordInfo(false), 150)}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
 
-            {password && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/.test(password) && (
-                <p className="password-error">
-                    Hasło musi mieć min. 8 znaków, dużą literę,
-                    cyfrę i znak specjalny
-                </p>
-            )}
+                <PasswordStrengthPopup
+                    visible={showPasswordInfo}
+                    password={password}
+                    passwordInfo={passwordInfo}
+                />
+            </div>
 
             <select
                 value={category}

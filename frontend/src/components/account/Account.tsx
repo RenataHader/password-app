@@ -1,5 +1,7 @@
 import "./account.css";
 import { useState, useEffect } from "react";
+import PasswordStrengthPopup from "../password_strenght/PasswordStrengthPopup";
+import { getPasswordInfo } from "../password_strenght/passwordStrength";
 
 type User = {
     userId: number;
@@ -19,16 +21,13 @@ export default function Account() {
     const [passwordError, setPasswordError] = useState("");
 
     const [user, setUser] = useState<User | null>(null);
+    const [showPasswordInfo, setShowPasswordInfo] = useState(false);
 
-    const [profileForm, setProfileForm] = useState({
-        name: "",
-        surname: "",
-        email: ""
-    });
-
+    const [profileForm, setProfileForm] = useState({name: "", surname: "", email: ""});
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: "",
-        newPassword: ""
+        newPassword: "",
+        repeatNewPassword: ""
     });
 
     useEffect(() => {
@@ -103,6 +102,7 @@ export default function Account() {
             setUser(saved);
             setEditProfile(false);
             setProfileError("");
+            setPasswordError("");
 
         } catch (err) {
             console.error("Nie udało się zapisać profilu", err);
@@ -123,7 +123,32 @@ export default function Account() {
         setProfileError("");
     };
 
+    const cancelPasswordEdit = () => {
+        setShowPasswordChange(false);
+        setPasswordForm({
+            currentPassword: "",
+            newPassword: "",
+            repeatNewPassword: ""
+        });
+        setPasswordError("");
+        setShowPasswordInfo(false);
+    };
+
     const changePassword = async () => {
+        if (
+             !passwordForm.currentPassword ||
+             !passwordForm.newPassword ||
+             !passwordForm.repeatNewPassword
+        ) {
+            setPasswordError("Uzupełnij wszystkie pola");
+            return;
+        }
+
+        if (passwordForm.newPassword !== passwordForm.repeatNewPassword) {
+            setPasswordError("Nowe hasła się nie zgadzają");
+            return;
+        }
+
         try {
             const res = await fetch("/api/me/password", {
                 method: "PUT",
@@ -146,7 +171,8 @@ export default function Account() {
 
             setPasswordForm({
                 currentPassword: "",
-                newPassword: ""
+                newPassword: "",
+                repeatNewPassword: ""
             });
 
             setShowPasswordChange(false);
@@ -183,41 +209,7 @@ export default function Account() {
                 </p>
             )}
 
-            {!editProfile ? (
-                <>
-                    <p><strong>Imię:</strong> {user.name}</p>
-                    <p><strong>Nazwisko:</strong> {user.surname}</p>
-                    <p><strong>Email:</strong> {user.email}</p>
-
-                    <p><strong>Hasło zmienione:</strong> {user.passwordChangedAt}</p>
-                    <p><strong>Następna zmiana hasła:</strong> {user.passwordNextChangeAt}</p>
-
-                    {user.passwordChangeRequired ? (
-                        <p className="password-warning">
-                            Hasło do menadżera wymaga zmiany.
-                        </p>
-                    ) : (
-                        <p>
-                            Do zmiany hasła zostało: {user.daysToPasswordChange} dni
-                        </p>
-                    )}
-
-                    <div className="profile-actions">
-
-                        <button onClick={() => setEditProfile(true)}>
-                            Edytuj profil
-                        </button>
-
-                        <button onClick={() => {
-                            setShowPasswordChange(prev => !prev);
-                            setPasswordError("");
-                        }}>
-                            Zmień hasło
-                        </button>
-
-                    </div>
-                </>
-            ) : (
+            {editProfile ? (
                 <>
                     <div className="profile-form">
 
@@ -265,9 +257,7 @@ export default function Account() {
 
                     </div>
                 </>
-            )}
-
-            {showPasswordChange && (
+            ) : showPasswordChange ? (
                 <div className="profile-form password-change-box">
 
                     <h3>Zmiana hasła do menadżera</h3>
@@ -290,10 +280,31 @@ export default function Account() {
 
                     <label>
                         Nowe hasło
+
+                        <div className="password-input-wrapper">
+                            <input
+                                type="password"
+                                name="newPassword"
+                                value={passwordForm.newPassword}
+                                onFocus={() => setShowPasswordInfo(true)}
+                                onBlur={() => setTimeout(() => setShowPasswordInfo(false), 150)}
+                                onChange={handlePasswordChange}
+                            />
+
+                            <PasswordStrengthPopup
+                                visible={showPasswordInfo}
+                                password={passwordForm.newPassword}
+                                passwordInfo={getPasswordInfo(passwordForm.newPassword)}
+                            />
+                        </div>
+                    </label>
+
+                    <label>
+                        Powtórz nowe hasło
                         <input
                             type="password"
-                            name="newPassword"
-                            value={passwordForm.newPassword}
+                            name="repeatNewPassword"
+                            value={passwordForm.repeatNewPassword}
                             onChange={handlePasswordChange}
                         />
                     </label>
@@ -306,14 +317,7 @@ export default function Account() {
 
                         <button
                             className="danger"
-                            onClick={() => {
-                                setShowPasswordChange(false);
-                                setPasswordForm({
-                                    currentPassword: "",
-                                    newPassword: ""
-                                });
-                                setPasswordError("");
-                            }}
+                            onClick={cancelPasswordEdit}
                         >
                             Anuluj
                         </button>
@@ -321,6 +325,69 @@ export default function Account() {
                     </div>
 
                 </div>
+            ) : (
+                <>
+                    <div className="profile-details">
+                        <div className="profile-detail-row">
+                            <span className="profile-detail-label">Imię:</span>
+                            <span className="profile-detail-value">{user.name}</span>
+                        </div>
+
+                        <div className="profile-detail-row">
+                            <span className="profile-detail-label">Nazwisko:</span>
+                            <span className="profile-detail-value">{user.surname}</span>
+                        </div>
+
+                        <div className="profile-detail-row">
+                            <span className="profile-detail-label">Email:</span>
+                            <span className="profile-detail-value">{user.email}</span>
+                        </div>
+
+                        <div className="profile-detail-row">
+                            <span className="profile-detail-label">Hasło zmienione:</span>
+                            <span className="profile-detail-value">{user.passwordChangedAt}</span>
+                        </div>
+
+                        <div className="profile-detail-row">
+                            <span className="profile-detail-label">Następna zmiana hasła:</span>
+                            <span className="profile-detail-value">{user.passwordNextChangeAt}</span>
+                        </div>
+
+                        <div className="profile-detail-row">
+                            <span className="profile-detail-label">Status hasła:</span>
+
+                            {user.passwordChangeRequired ? (
+                                <span className="profile-detail-value password-warning">
+                                    Hasło do menadżera wymaga zmiany.
+                                </span>
+                            ) : (
+                                <span className="profile-detail-value">
+                                    Do zmiany hasła zostało: {user.daysToPasswordChange} dni
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="profile-actions">
+
+                        <button onClick={() => {
+                            setEditProfile(true);
+                            setShowPasswordChange(false);
+                            setPasswordError("");
+                        }}>
+                            Edytuj profil
+                        </button>
+
+                        <button onClick={() => {
+                            setShowPasswordChange(true);
+                            setEditProfile(false);
+                            setProfileError("");
+                        }}>
+                            Zmień hasło
+                        </button>
+
+                    </div>
+                </>
             )}
 
         </section>
