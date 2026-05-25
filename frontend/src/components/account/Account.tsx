@@ -124,6 +124,19 @@ export default function Account() {
     };
 
     const changePassword = async () => {
+
+        setPasswordError("");
+
+        const passwordRegex =
+            /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+        if (!passwordRegex.test(passwordForm.newPassword)) {
+            setPasswordError(
+                "Hasło musi mieć min. 8 znaków, 1 wielką literę, 1 cyfrę i 1 znak specjalny"
+            );
+            return;
+        }
+
         try {
             const res = await fetch("/api/me/password", {
                 method: "PUT",
@@ -150,11 +163,15 @@ export default function Account() {
             });
 
             setShowPasswordChange(false);
+
             setPasswordError("");
 
         } catch (err) {
             console.error("Nie udało się zmienić hasła", err);
-            setPasswordError("Nie udało się zmienić hasła.");
+
+            setPasswordError(
+                "Nie udało się zmienić hasła."
+            );
         }
     };
 
