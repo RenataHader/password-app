@@ -12,20 +12,49 @@ export default function Generator({
     copyPassword
 }: Props) {
 
-    const generate = () => {
-        const chars =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+    const getSecureRandomIndex = (max: number) => {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        return array[0] % max;
+    };
 
-        let pass = "";
-        const randomValues = new Uint32Array(16);
+    const generatePassword = () => {
+        const length = 16;
 
-        window.crypto.getRandomValues(randomValues);
+        const upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const lowerCase = "abcdefghijklmnopqrstuvwxyz";
+        const numbers = "0123456789";
+        const specialChars = "!@#$%^&*-_+?";
 
-        for (let i = 0; i < 16; i++) {
-            pass += chars[randomValues[i] % chars.length];
+        const allChars = upperCase + lowerCase + numbers + specialChars;
+
+        const getRandomChar = (chars: string) => {
+            return chars[getSecureRandomIndex(chars.length)];
+        };
+
+        const shuffle = (value: string) => {
+            const chars = value.split("");
+
+            for (let i = chars.length - 1; i > 0; i--) {
+                const j = getSecureRandomIndex(i + 1);
+                [chars[i], chars[j]] = [chars[j], chars[i]];
+            }
+
+            return chars.join("");
+        };
+
+        let generated = "";
+
+        generated += getRandomChar(upperCase);
+        generated += getRandomChar(lowerCase);
+        generated += getRandomChar(numbers);
+        generated += getRandomChar(specialChars);
+
+        for (let i = generated.length; i < length; i++) {
+            generated += getRandomChar(allChars);
         }
 
-        setPassword(pass);
+        setPassword(shuffle(generated));
     };
 
     return (
@@ -33,7 +62,7 @@ export default function Generator({
 
             <h3>🔑 Generator</h3>
 
-            <button onClick={generate}>
+            <button type="button" onClick={generatePassword}>
                 Generuj hasło
             </button>
 

@@ -1,7 +1,7 @@
 package com.example.password.passwordentry;
 
 import com.example.password.account.Account;
-import com.example.password.account.AccountRepository;
+import com.example.password.account.SessionAccountService;
 import com.example.password.config.EncryptionUtil;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -20,27 +20,21 @@ import java.util.stream.Collectors;
 public class PasswordEntryController {
 
     private final PasswordEntryRepository passwordEntryRepository;
-    private final AccountRepository accountRepository;
     private final EncryptionUtil encryptionUtil;
+    private final SessionAccountService sessionAccountService;
 
-    public PasswordEntryController(PasswordEntryRepository passwordEntryRepository, AccountRepository accountRepository, EncryptionUtil encryptionUtil) {
+    public PasswordEntryController(PasswordEntryRepository passwordEntryRepository, EncryptionUtil encryptionUtil, SessionAccountService sessionAccountService) {
         this.passwordEntryRepository = passwordEntryRepository;
-        this.accountRepository = accountRepository;
         this.encryptionUtil = encryptionUtil;
+        this.sessionAccountService = sessionAccountService;
     }
 
     @GetMapping
     public ResponseEntity<?> getPasswords(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nie jesteś zalogowany");
-        }
-
-        Optional<Account> accountOpt = accountRepository.findById(userId);
+        Optional<Account> accountOpt = sessionAccountService.getLoggedAccount(session);
 
         if (accountOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nie znaleziono użytkownika");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nie jesteś zalogowany");
         }
 
         Account account = accountOpt.get();
@@ -54,14 +48,6 @@ public class PasswordEntryController {
             map.put("login", entry.getLogin());
             map.put("category", entry.getCategory());
 
-            try {
-                String decryptedPassword = encryptionUtil.decrypt(entry.getEncryptedPassword(), entry.getIv());
-                map.put("password", decryptedPassword);
-            } catch (Exception e) {
-                map.put("password", "Błąd deszyfrowania");
-                map.put("error", e.getMessage());
-            }
-
             return map;
         }).collect(Collectors.toList());
 
@@ -70,16 +56,10 @@ public class PasswordEntryController {
 
     @PostMapping
     public ResponseEntity<?> addPassword(@RequestBody Map<String, String> data, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nie jesteś zalogowany");
-        }
-
-        Optional<Account> accountOpt = accountRepository.findById(userId);
+        Optional<Account> accountOpt = sessionAccountService.getLoggedAccount(session);
 
         if (accountOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nie znaleziono użytkownika");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nie jesteś zalogowany");
         }
 
         String site = data.get("site");
@@ -88,8 +68,8 @@ public class PasswordEntryController {
 
         if (
                 site == null || site.isBlank() ||
-                login == null || login.isBlank() ||
-                password == null || password.isBlank()
+                        login == null || login.isBlank() ||
+                        password == null || password.isBlank()
         ) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nazwa, login i hasło są wymagane");
         }
@@ -124,22 +104,89 @@ public class PasswordEntryController {
 
             return ResponseEntity.ok("Hasło zaszyfrowane i zapisane!");
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Błąd szyfrowania: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("Nie udało się zapisać hasła");
+        }
+    }
+
+    @GetMapping("/{id}/reveal")
+    public ResponseEntity<?> revealPassword(@PathVariable Long id, HttpSession session) {
+        Optional<Account> accountOpt = sessionAccountService.getLoggedAccount(session);
+
+        if (accountOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nie jesteś zalogowany");
+        }
+
+        Account account = accountOpt.get();
+
+        Optional<PasswordEntry> entryOpt = passwordEntryRepository.findByIdAndAccount(id, account);
+
+        if (entryOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nie znaleziono hasła");
+        }
+
+        try {
+            PasswordEntry entry = entryOpt.get();
+            String decryptedPassword = encryptionUtil.decrypt(entry.getEncryptedPassword(), entry.getIv());
+
+            return ResponseEntity.ok(Map.of("password", decryptedPassword));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Nie udało się odszyfrować hasła");
+        }
+    }
+
+    @PatchMapping("/{id}/password")
+    public ResponseEntity<?> updateEntryPassword(@PathVariable Long id, @RequestBody Map<String, String> data, HttpSession session) {
+        Optional<Account> accountOpt = sessionAccountService.getLoggedAccount(session);
+
+        if (accountOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nie jesteś zalogowany");
+        }
+
+        Account account = accountOpt.get();
+
+        Optional<PasswordEntry> entryOpt = passwordEntryRepository.findByIdAndAccount(id, account);
+
+        if (entryOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nie znaleziono hasła");
+        }
+
+        String currentPassword = data.get("currentPassword");
+        String newPassword = data.get("newPassword");
+
+        if (currentPassword == null || currentPassword.isBlank() || newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Aktualne hasło i nowe hasło są wymagane");
+        }
+
+        try {
+            PasswordEntry entry = entryOpt.get();
+
+            String decryptedCurrentPassword = encryptionUtil.decrypt(entry.getEncryptedPassword(), entry.getIv());
+
+            if (!decryptedCurrentPassword.equals(currentPassword)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Aktualne zapisane hasło jest nieprawidłowe");
+            }
+
+            byte[] iv = encryptionUtil.generateIv();
+            byte[] encrypted = encryptionUtil.encrypt(newPassword, iv);
+
+            entry.setEncryptedPassword(encrypted);
+            entry.setIv(iv);
+
+            passwordEntryRepository.save(entry);
+
+            return ResponseEntity.ok("Zmieniono zapisane hasło");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Nie udało się zmienić hasła");
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletePassword(@PathVariable Long id, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nie jesteś zalogowany");
-        }
-
-        Optional<Account> accountOpt = accountRepository.findById(userId);
+        Optional<Account> accountOpt = sessionAccountService.getLoggedAccount(session);
 
         if (accountOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nie znaleziono użytkownika");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nie jesteś zalogowany");
         }
 
         Account account = accountOpt.get();

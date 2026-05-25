@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./register.css";
+import PasswordStrengthPopup from "../components/password_strenght/PasswordStrengthPopup";
+import { getPasswordInfo } from "../components/password_strenght/passwordStrength";
 
 export default function Register() {
     const [firstName, setFirstName] = useState("");
@@ -12,6 +14,7 @@ export default function Register() {
 
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
     const navigate = useNavigate();
+    const [showPasswordInfo, setShowPasswordInfo] = useState(false);
 
     const handleRegister = async () => {
         setError("");
@@ -80,12 +83,22 @@ export default function Register() {
                         onChange={(e) => setEmail(e.target.value)}
                     />
 
-                    <input
-                        type="password"
-                        placeholder="Hasło"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <div className="password-input-wrapper">
+                        <input
+                            type="password"
+                            placeholder="Hasło"
+                            value={password}
+                            onFocus={() => setShowPasswordInfo(true)}
+                            onBlur={() => setTimeout(() => setShowPasswordInfo(false), 150)}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+
+                        <PasswordStrengthPopup
+                            visible={showPasswordInfo}
+                            password={password}
+                            passwordInfo={getPasswordInfo(password)}
+                        />
+                    </div>
 
                     <input
                         type="password"

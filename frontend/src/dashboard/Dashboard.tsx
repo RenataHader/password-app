@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getPasswordInfo } from "../components/password_strenght/passwordStrength";
 
 import Sidebar from "../components/sidebar/Sidebar";
 import SearchBar from "../components/search_bar/SearchBar";
@@ -15,7 +16,7 @@ type PasswordItem = {
     site: string;
     link?: string;
     login: string;
-    password: string;
+    password?: string;
     category: string;
     hidden: boolean;
 };
@@ -62,7 +63,7 @@ export default function Dashboard() {
                 site: entry.name,
                 link: entry.link,
                 login: entry.login,
-                password: entry.password,
+                password: undefined,
                 category: entry.category,
                 hidden: true
             }));
@@ -84,33 +85,23 @@ export default function Dashboard() {
 
     const addPassword = async () => {
 
-    const strongPassword =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+        if (!site.trim() || !login.trim() || !password.trim()) {
+            alert("Uzupełnij wszystkie pola");
+            return;
+        }
 
-    if (!site.trim() || !login.trim() || !password.trim()) {
-        alert("Uzupełnij wszystkie pola");
-        return;
-    }
-
-    if (!strongPassword.test(password)) {
-        alert(
-            "Hasło musi mieć min. 8 znaków, dużą literę, cyfrę i znak specjalny"
-        );
-        return;
-    }
-
-    const response = await fetch("/api/passwords", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-                site,
-                link: normalizeLink(link),
-                login,
-                password,
-                category
-            })
-        });
+        const response = await fetch("/api/passwords", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    site,
+                    link: normalizeLink(link),
+                    login,
+                    password,
+                    category
+                })
+            });
 
         if (!response.ok) {
             console.error("Nie udało się dodać hasła");
@@ -127,22 +118,69 @@ export default function Dashboard() {
         setView("list");
     };
 
-    const toggleVisibility = (id: number) => {
-        setItems(prev =>
-            prev.map(item =>
-                item.id === id ? { ...item, hidden: !item.hidden } : item
-            )
-        );
+    const toggleVisibility = async (id: number) => {
+        const item = items.find(i => i.id === id);
+
+        if (!item) return;
+
+        if (!item.hidden) {
+            setItems(prev =>
+                prev.map(i =>
+                    i.id === id ? { ...i, hidden: true, password: undefined } : i
+                )
+            );
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/passwords/${id}/reveal`, {
+                credentials: "include"
+            });
+
+            if (response.status === 401) {
+                navigate("/");
+                return;
+            }
+
+            if (!response.ok) {
+                alert("Nie udało się pobrać hasła");
+                return;
+            }
+
+            const data = await response.json();
+
+            setItems(prev =>
+                prev.map(i =>
+                    i.id === id
+                        ? { ...i, password: data.password, hidden: false }
+                        : i
+                )
+            );
+        } catch (err) {
+            alert("Błąd połączenia z serwerem");
+        }
     };
 
    const deletePassword = async (id: number) => {
+
+        const confirmed = window.confirm("Czy na pewno chcesz usunąć to hasło?");
+
+        if (!confirmed) {
+            return;
+        }
+
        const response = await fetch(`/api/passwords/${id}`, {
            method: "DELETE",
            credentials: "include"
        });
 
+       if (response.status === 401) {
+           navigate("/");
+           return;
+       }
+
        if (!response.ok) {
-           console.error("Nie udało się usunąć hasła");
+           alert("Nie udało się usunąć hasła");
            return;
        }
 
@@ -165,18 +203,89 @@ export default function Dashboard() {
         return matchSearch && matchCategory;
     });
 
-const handleLogout = async () => {
-    await fetch("/api/logout", {
-        method: "POST",
-        credentials: "include"
-    });
+    const handleLogout = async () => {
+        await fetch("/api/logout", {
+            method: "POST",
+            credentials: "include"
+        });
 
-    navigate("/");
-};
+        navigate("/");
+    };
+
+    const updateSavedPassword = async (
+        id: number,
+        currentPassword: string,
+        newPassword: string
+    ): Promise<boolean> => {
+        const response = await fetch(`/api/passwords/${id}/password`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+                currentPassword,
+                newPassword
+            })
+        });
+
+        if (response.status === 401) {
+            navigate("/");
+            return false;
+        }
+
+        if (!response.ok) {
+            const message = await response.text();
+            alert(message || "Nie udało się zmienić hasła");
+            return false;
+        }
+
+        setItems(prev =>
+            prev.map(item =>
+                item.id === id
+                    ? { ...item, password: undefined, hidden: true }
+                    : item
+            )
+        );
+
+        alert("Hasło zostało zmienione");
+        return true;
+    };
+
+    const copySavedPassword = async (id: number) => {
+        try {
+            const item = items.find(i => i.id === id);
+
+            let passwordToCopy = item?.password;
+
+            if (!passwordToCopy) {
+                const response = await fetch(`/api/passwords/${id}/reveal`, {
+                    credentials: "include"
+                });
+
+                if (response.status === 401) {
+                    navigate("/");
+                    return;
+                }
+
+                if (!response.ok) {
+                    alert("Nie udało się pobrać hasła");
+                    return;
+                }
+
+                const data = await response.json();
+                passwordToCopy = data.password;
+            }
+
+            await navigator.clipboard.writeText(passwordToCopy);
+
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch (err) {
+            alert("Nie udało się skopiować hasła");
+        }
+    };
 
     return (
         <div className="dashboard-container">
-
             <Sidebar
                 selectedCategory={selectedCategory}
                 activeView={view}
@@ -186,16 +295,15 @@ const handleLogout = async () => {
             />
 
             <main className="main">
+                {copied && (
+                    <div className="copy-toast">
+                          📋 Skopiowano hasło!
+                    </div>
+                )}
 
                 {view === "list" && (
                     <>
                         <SearchBar search={search} setSearch={setSearch} />
-
-                        {copied && (
-                            <div className="copy-toast">
-                                📋 Skopiowano hasło!
-                            </div>
-                        )}
 
                         <div className="list">
                             {filtered.length === 0 ? (
@@ -206,8 +314,9 @@ const handleLogout = async () => {
                                         key={item.id}
                                         item={item}
                                         toggleVisibility={toggleVisibility}
-                                        copyPassword={copyPassword}
+                                        copyPassword={copySavedPassword}
                                         deletePassword={deletePassword}
+                                        updateSavedPassword={updateSavedPassword}
                                     />
                                 ))
                             )}
@@ -230,6 +339,7 @@ const handleLogout = async () => {
                             category={category}
                             setCategory={setCategory}
                             addPassword={addPassword}
+                            passwordInfo={getPasswordInfo(password)}
                         />
 
                         <Generator
