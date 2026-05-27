@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./register.css";
 import PasswordStrengthPopup from "../components/password_strenght/PasswordStrengthPopup";
 import { getPasswordInfo } from "../components/password_strenght/passwordStrength";
@@ -116,7 +116,7 @@ export default function Register() {
                 {error && <p className="error">{error}</p>}
 
                 <p className="register-link">
-                    Masz konto? <a href="/">Zaloguj się</a>
+                    Masz konto? <Link to="/">Zaloguj się</Link>
                 </p>
 
             </div>

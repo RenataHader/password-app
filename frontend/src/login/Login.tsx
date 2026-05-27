@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./login.css";
 
 export default function Login() {
@@ -113,7 +113,7 @@ export default function Login() {
                 {error && <p className="error">{error}</p>}
                 <p className="register-link">
                     Nie masz konta?{" "}
-                    <a href="/register">Zarejestruj się</a>
+                    <Link to="/register">Zarejestruj się</Link>
                 </p>
             </div>
         </div>
