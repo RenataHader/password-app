@@ -111,10 +111,12 @@ export default function Login() {
                     )}
                 </section>
                 {error && <p className="error">{error}</p>}
-                <p className="register-link">
-                    Nie masz konta?{" "}
-                    <Link to="/register">Zarejestruj się</Link>
-                </p>
+                {!codeSent && (
+                    <p className="register-link">
+                        Nie masz konta?{" "}
+                        <Link to="/register">Zarejestruj się</Link>
+                    </p>
+                )}
             </div>
         </div>
     );
